@@ -4,6 +4,8 @@ namespace PeeHaa\AsyncDnsServer;
 
 use Amp\Promise;
 use Amp\Socket\DatagramSocket;
+use Amp\Socket\ResourceSocket;
+use Amp\Socket\Server as SocketServer;
 use Amp\Socket\SocketAddress;
 use Amp\Success;
 use LibDNS\Decoder\Decoder;
@@ -37,6 +39,8 @@ final class Server
         foreach ($this->configuration->getServerAddresses() as $serverAddress) {
             if ($serverAddress->getType() === ServerAddress::TYPE_UDP) {
                 $this->startUdpServer($serverAddress);
+            } elseif ($serverAddress->getType() === ServerAddress::TYPE_TCP) {
+                $this->startTcpServer($serverAddress);
             }
         }
 
@@ -55,6 +59,35 @@ final class Server
                 $answer = yield $this->processMessage($client, $data);
 
                 yield $server->send($client, $this->encoder->encode($answer->getMessage()));
+            }
+        });
+    }
+
+    private function startTcpServer(ServerAddress $serverAddress): void
+    {
+        asyncCall(function () use ($serverAddress) {
+            $server = SocketServer::listen(sprintf('%s:%d', $serverAddress->getIpAddress(), $serverAddress->getPort()));
+
+            $this->configuration->getLogger()->started($serverAddress);
+
+            /** @var ResourceSocket $socket */
+            while ($socket = yield $server->accept()) {
+                $this->processTcpClient($socket);
+            }
+        });
+    }
+
+    private function processTcpClient(ResourceSocket $socket): void
+    {
+        asyncCall(function () use ($socket) {
+            while (null !== $chunk = yield $socket->read()) {
+                /** @var Message $answer */
+                $answer = yield $this->processMessage(
+                    new SocketAddress($socket->getRemoteAddress()->getHost(), $socket->getRemoteAddress()->getPort()),
+                    $chunk,
+                );
+
+                yield $socket->end($this->encoder->encode($answer->getMessage()));
             }
         });
     }
