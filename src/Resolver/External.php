@@ -65,6 +65,8 @@ final class External implements Resolver
 
                 $message = new Message($this->decoder->decode($chunk));
 
+                $message->getMessage()->isAuthoritative(false);
+
                 $this->logger->receivedMessageFromExternalResolver($message, $this->ipAddress, $this->port);
 
                 return $message;
