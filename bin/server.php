@@ -22,11 +22,11 @@ Loop::run(static function () {
     $logger  = Factory::buildStdOutLogger();
     $encoder = (new EncoderFactory())->create();
     $decoder = (new DecoderFactory())->create();
-    $cache   = new Redis(new RedisClient(new RemoteExecutor(RedisConfig::fromUri(sprintf('tcp://%s:%d', '127.0.0.1', 6379)))));
+    //$cache   = new Redis(new RedisClient(new RemoteExecutor(RedisConfig::fromUri(sprintf('tcp://%s:%d', '127.0.0.1', 6379)))));
 
     $configuration = new Configuration(
         $logger,
-        new Cache(new External($logger, $encoder, $decoder, '8.8.8.8'), $cache),
+        new External($logger, $encoder, $decoder, '8.8.8.8'),
         new ServerAddress(ServerAddress::TYPE_UDP, '127.0.0.1'),
         new ServerAddress(ServerAddress::TYPE_TCP, '127.0.0.1'),
         new ServerAddress(ServerAddress::TYPE_UDP, '[::1]'),
