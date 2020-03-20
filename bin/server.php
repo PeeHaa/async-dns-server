@@ -2,7 +2,6 @@
 
 namespace PeeHaa\AsyncDnsServer\Binary;
 
-use Amp\Cache\NullCache;
 use Amp\Loop;
 use Amp\Redis\Config as RedisConfig;
 use Amp\Redis\Redis as RedisClient;
