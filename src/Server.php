@@ -54,17 +54,16 @@ final class Server
             while ([$client, $data] = yield $server->receive()) {
                 $this->logger->incomingPacket($data, $client);
 
-                $query = $this->decoder->decode($data);
+                $query = new Message($this->decoder->decode($data));
 
                 $this->logger->query($query);
 
+                /** @var Message $answer */
                 $answer = yield $this->resolver->query($query);
 
                 $this->logger->answerQuery($answer, $client);
 
-                var_dump($client);
-
-                yield $server->send($client, $this->encoder->encode($answer));
+                yield $server->send($client, $this->encoder->encode($answer->getMessage()));
             }
         });
 

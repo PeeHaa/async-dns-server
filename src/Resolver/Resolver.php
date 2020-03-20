@@ -3,9 +3,12 @@
 namespace PeeHaa\AsyncDnsServer\Resolver;
 
 use Amp\Promise;
-use LibDNS\Messages\Message;
+use PeeHaa\AsyncDnsServer\Message;
 
 interface Resolver
 {
+    /**
+     * @return Promise<Message>
+     */
     public function query(Message $message): Promise;
 }

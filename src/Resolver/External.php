@@ -6,9 +6,9 @@ use Amp\Promise;
 use Amp\Socket\EncryptableSocket;
 use LibDNS\Decoder\Decoder;
 use LibDNS\Encoder\Encoder;
-use LibDNS\Messages\Message;
 use PeeHaa\AsyncDnsServer\Exception\NetworkError;
 use PeeHaa\AsyncDnsServer\Logger\Logger;
+use PeeHaa\AsyncDnsServer\Message;
 use function Amp\call;
 use function Amp\Socket\connect;
 
@@ -49,7 +49,7 @@ final class External implements Resolver
 
                 $this->logger->sendQueryToExternalResolver($message, $this->ipAddress, $this->port);
 
-                $packet = $this->encoder->encode($message);
+                $packet = $this->encoder->encode($message->getMessage());
 
                 $this->logger->sendPacketToExternalResolver($packet, $this->ipAddress, $this->port);
 
@@ -63,7 +63,7 @@ final class External implements Resolver
             while (null !== $chunk = yield $socket->read()) {
                 $this->logger->receivedResponseFromExternalResolver($chunk, $this->ipAddress, $this->port);
 
-                $message = $this->decoder->decode($chunk);
+                $message = new Message($this->decoder->decode($chunk));
 
                 $this->logger->receivedMessageFromExternalResolver($message, $this->ipAddress, $this->port);
 

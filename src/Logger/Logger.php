@@ -3,10 +3,8 @@
 namespace PeeHaa\AsyncDnsServer\Logger;
 
 use Amp\Socket\SocketAddress;
-use LibDNS\Messages\Message;
-use LibDNS\Records\Record;
-use LibDNS\Records\RecordCollection;
 use Monolog\Logger as MonologLogger;
+use PeeHaa\AsyncDnsServer\Message;
 
 final class Logger
 {
@@ -29,7 +27,7 @@ final class Logger
 
     public function query(Message $message): void
     {
-        $this->logger->debug('Received query', ['message' => $this->convertMessageToArray($message)]);
+        $this->logger->debug('Received query', ['message' => $message->toArray()]);
     }
 
     public function openConnectionToExternalResolver(string $ipAddress, int $port): void
@@ -46,7 +44,7 @@ final class Logger
     {
         $this->logger->debug(
             sprintf('Sending query to external resolver at %s:%d', $ipAddress, $port),
-            ['message' => $this->convertMessageToArray($message)],
+            ['message' => $message->toArray()],
         );
     }
 
@@ -68,7 +66,7 @@ final class Logger
     {
         $this->logger->debug(
             sprintf('Received message from external resolver at %s:%d', $ipAddress, $port),
-            ['message' => $this->convertMessageToArray($message)],
+            ['message' => $message->toArray()],
         );
     }
 
@@ -76,46 +74,12 @@ final class Logger
     {
         $this->logger->debug(
             sprintf('Sending answer to %s', $client->toString()),
-            ['message' => $this->convertMessageToArray($message)],
+            ['message' => $message->toArray()],
         );
     }
 
     public function networkError(\Throwable $e): void
     {
         $this->logger->error($e->getMessage(), ['exception' => $e]);
-    }
-
-    private function convertMessageToArray(Message $message): array
-    {
-        return [
-            'id'                 => $message->getID(),
-            'type'               => $message->getType(),
-            'opCode'             => $message->getOpCode(),
-            'authoritative'      => $message->isAuthoritative(),
-            'truncated'          => $message->isTruncated(),
-            'recursionDesired'   => $message->isRecursionDesired(),
-            'recursionAvailable' => $message->isRecursionAvailable(),
-            'responseCode'       => $message->getResponseCode(),
-            'questions'          => $this->convertRecordCollectionToArray($message->getQuestionRecords()),
-            'answers'            => $this->convertRecordCollectionToArray($message->getAnswerRecords()),
-            'authorityRecords'   => $this->convertRecordCollectionToArray($message->getAuthorityRecords()),
-            'additionalRecords'  => $this->convertRecordCollectionToArray($message->getAdditionalRecords()),
-        ];
-    }
-
-    private function convertRecordCollectionToArray(RecordCollection $recordCollection): array
-    {
-        $records = [];
-
-        /** @var Record $record */
-        foreach ($recordCollection as $record) {
-            $records[] = [
-                'name'  => $record->getName(),
-                'type'  => $record->getType(),
-                'class' => $record->getClass(),
-            ];
-        }
-
-        return $records;
     }
 }
