@@ -4,6 +4,7 @@ namespace PeeHaa\AsyncDnsServer\Logger;
 
 use Amp\Socket\SocketAddress;
 use Monolog\Logger as MonologLogger;
+use PeeHaa\AsyncDnsServer\Configuration\ServerAddress;
 use PeeHaa\AsyncDnsServer\Message;
 
 final class Logger
@@ -15,9 +16,16 @@ final class Logger
         $this->logger = $logger;
     }
 
-    public function started(string $ipAddress, int $port): void
+    public function started(ServerAddress $serverAddress): void
     {
-        $this->logger->info(sprintf('DNS server started at %s:%d', $ipAddress, $port));
+        $this->logger->info(
+            sprintf(
+                'DNS server started at %s://%s:%d',
+                $serverAddress->getType(),
+                $serverAddress->getIpAddress(),
+                $serverAddress->getPort(),
+            ),
+        );
     }
 
     public function incomingPacket(string $packet, SocketAddress $client): void

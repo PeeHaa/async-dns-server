@@ -9,6 +9,8 @@ use Amp\Redis\RemoteExecutor;
 use LibDNS\Decoder\DecoderFactory;
 use LibDNS\Encoder\EncoderFactory;
 use PeeHaa\AsyncDnsServer\Cache\Redis;
+use PeeHaa\AsyncDnsServer\Configuration\Configuration;
+use PeeHaa\AsyncDnsServer\Configuration\ServerAddress;
 use PeeHaa\AsyncDnsServer\Logger\Factory;
 use PeeHaa\AsyncDnsServer\Resolver\Cache;
 use PeeHaa\AsyncDnsServer\Resolver\External;
@@ -22,11 +24,14 @@ Loop::run(static function () {
     $decoder = (new DecoderFactory())->create();
     $cache   = new Redis(new RedisClient(new RemoteExecutor(RedisConfig::fromUri(sprintf('tcp://%s:%d', '127.0.0.1', 6379)))));
 
-    yield (new Server(
+    $configuration = new Configuration(
         $logger,
         new Cache(new External($logger, $encoder, $decoder, '8.8.8.8'), $cache),
-        $encoder,
-        $decoder,
-        '127.0.0.1', //'[::1]',
-    ))->start();
+        new ServerAddress(ServerAddress::TYPE_UDP, '127.0.0.1'),
+        new ServerAddress(ServerAddress::TYPE_TCP, '127.0.0.1'),
+        new ServerAddress(ServerAddress::TYPE_UDP, '[::1]'),
+        new ServerAddress(ServerAddress::TYPE_TCP, '[::1]'),
+    );
+
+    yield (new Server($configuration, $encoder, $decoder))->start();
 });

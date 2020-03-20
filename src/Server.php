@@ -4,41 +4,28 @@ namespace PeeHaa\AsyncDnsServer;
 
 use Amp\Promise;
 use Amp\Socket\DatagramSocket;
+use Amp\Socket\SocketAddress;
 use Amp\Success;
 use LibDNS\Decoder\Decoder;
 use LibDNS\Encoder\Encoder;
-use PeeHaa\AsyncDnsServer\Logger\Logger;
-use PeeHaa\AsyncDnsServer\Resolver\Resolver;
+use PeeHaa\AsyncDnsServer\Configuration\Configuration;
+use PeeHaa\AsyncDnsServer\Configuration\ServerAddress;
 use function Amp\asyncCall;
+use function Amp\call;
 
 final class Server
 {
-    private Logger $logger;
-
-    private Resolver $resolver;
+    private Configuration $configuration;
 
     private Encoder $encoder;
 
     private Decoder $decoder;
 
-    private string $ipAddress;
-
-    private int $port;
-
-    public function __construct(
-        Logger $logger,
-        Resolver $resolver,
-        Encoder $encoder,
-        Decoder $decoder,
-        string $ipAddress,
-        int $port = 53
-    ) {
-        $this->logger    = $logger;
-        $this->resolver  = $resolver;
-        $this->encoder   = $encoder;
-        $this->decoder   = $decoder;
-        $this->ipAddress = $ipAddress;
-        $this->port      = $port;
+    public function __construct(Configuration $configuration, Encoder $encoder, Decoder $decoder)
+    {
+        $this->configuration = $configuration;
+        $this->encoder       = $encoder;
+        $this->decoder       = $decoder;
     }
 
     /**
@@ -46,27 +33,50 @@ final class Server
      */
     public function start(): Promise
     {
-        asyncCall(function () {
-            $server = DatagramSocket::bind(sprintf('%s:%d', $this->ipAddress, $this->port));
+        /** @var ServerAddress $serverAddress */
+        foreach ($this->configuration->getServerAddresses() as $serverAddress) {
+            if ($serverAddress->getType() === ServerAddress::TYPE_UDP) {
+                $this->startUdpServer($serverAddress);
+            }
+        }
 
-            $this->logger->started($this->ipAddress, $this->port);
+        return new Success();
+    }
+
+    private function startUdpServer(ServerAddress $serverAddress): void
+    {
+        asyncCall(function () use ($serverAddress) {
+            $server = DatagramSocket::bind(sprintf('%s:%d', $serverAddress->getIpAddress(), $serverAddress->getPort()));
+
+            $this->configuration->getLogger()->started($serverAddress);
 
             while ([$client, $data] = yield $server->receive()) {
-                $this->logger->incomingPacket($data, $client);
-
-                $query = new Message($this->decoder->decode($data));
-
-                $this->logger->query($query);
-
                 /** @var Message $answer */
-                $answer = yield $this->resolver->query($query);
-
-                $this->logger->answerQuery($answer, $client);
+                $answer = yield $this->processMessage($client, $data);
 
                 yield $server->send($client, $this->encoder->encode($answer->getMessage()));
             }
         });
+    }
 
-        return new Success();
+    /**
+     * @return Promise<Message>
+     */
+    private function processMessage(SocketAddress $client, string $data): Promise
+    {
+        return call(function () use ($client, $data) {
+            $this->configuration->getLogger()->incomingPacket($data, $client);
+
+            $query = new Message($this->decoder->decode($data));
+
+            $this->configuration->getLogger()->query($query);
+
+            /** @var Message $answer */
+            $answer = yield $this->configuration->getResolver()->query($query);
+
+            $this->configuration->getLogger()->answerQuery($answer, $client);
+
+            return $answer;
+        });
     }
 }
