@@ -15,11 +15,12 @@
         "ext-json": "*",
         "amphp/amp": "^2.4",
         "amphp/cache": "^1.3",
-        "amphp/file": "^1",
+        "amphp/file": "^1.0",
         "amphp/log": "^1.1",
         "amphp/redis": "^1.0",
         "amphp/socket": "^1.1",
-        "daverandom/libdns": "^2.0"
+        "daverandom/libdns": "^2.0",
+        "league/climate": "^3.5"
     },
     "require-dev": {
         "phpunit/phpunit": "^9"

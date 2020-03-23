@@ -3,15 +3,15 @@
 namespace PeeHaa\AsyncDnsServer\Logger;
 
 use Amp\Socket\SocketAddress;
-use Monolog\Logger as MonologLogger;
 use PeeHaa\AsyncDnsServer\Configuration\ServerAddress;
 use PeeHaa\AsyncDnsServer\Message;
+use Psr\Log\LoggerInterface;
 
 final class Logger
 {
-    private MonologLogger $logger;
+    private LoggerInterface $logger;
 
-    public function __construct(MonologLogger $logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }

@@ -5,6 +5,7 @@ namespace PeeHaa\AsyncDnsServer\Logger;
 use Amp\Log\ConsoleFormatter;
 use Amp\Log\StreamHandler;
 use Monolog\Logger as MonologLogger;
+use Psr\Log\NullLogger;
 use function Amp\ByteStream\getStdout;
 
 final class Factory
@@ -18,5 +19,10 @@ final class Factory
         $logger->pushHandler($handler);
 
         return new Logger($logger);
+    }
+
+    public static function buildNullLogger(): Logger
+    {
+        return new Logger(new NullLogger());
     }
 }
