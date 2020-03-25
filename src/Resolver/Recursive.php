@@ -22,11 +22,14 @@ final class Recursive implements Resolver
 
     private Decoder $decoder;
 
-    public function __construct(Logger $logger, Encoder $encoder, Decoder $decoder)
+    private int $numberOfRecursionAllowed;
+
+    public function __construct(Logger $logger, Encoder $encoder, Decoder $decoder, int $maximumRecursionDepth = 12)
     {
-        $this->logger  = $logger;
-        $this->encoder = $encoder;
-        $this->decoder = $decoder;
+        $this->logger                   = $logger;
+        $this->encoder                  = $encoder;
+        $this->decoder                  = $decoder;
+        $this->numberOfRecursionAllowed = $maximumRecursionDepth;
     }
 
     /**
@@ -39,8 +42,18 @@ final class Recursive implements Resolver
             // @todo: pick a random root server and resolve it using the root hints resolve
             $answer = yield $this->runQuery(sprintf('udp://%s:%d', '192.33.4.12', 53), $message);
 
+            $this->numberOfRecursionAllowed--;
+
             while ($this->needsFurtherRecursion($answer)) {
+                if (!$this->numberOfRecursionAllowed) {
+                    $answer->getMessage()->setResponseCode(5);
+
+                    return $answer;
+                }
+
                 $answer = yield $this->getNextAnswerInChain($message, $answer);
+
+                $this->numberOfRecursionAllowed--;
             }
 
             return $answer;
