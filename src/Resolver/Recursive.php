@@ -35,12 +35,6 @@ final class Recursive implements Resolver
     public function query(Message $message): Promise
     {
         return call(function () use ($message) {
-            /** @var EncryptableSocket $socket */
-            // @todo: pick a random root server and resolve it using the root hints resolver
-            //$socket = yield connect(sprintf('udp://%s:%d', '198.41.0.4', 53));
-            //$socket = yield connect(sprintf('udp://%s:%d', 'e.gtld-servers.net', 53));
-            //$socket = yield connect(sprintf('udp://%s:%d', 'ns.google.com', 53));
-
             /** @var Message $answer */
             // @todo: pick a random root server and resolve it using the root hints resolve
             $answer = yield $this->runQuery(sprintf('udp://%s:%d', '192.33.4.12', 53), $message);
