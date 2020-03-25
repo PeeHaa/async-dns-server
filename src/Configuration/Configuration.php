@@ -16,6 +16,7 @@ use PeeHaa\AsyncDnsServer\Logger\Factory;
 use PeeHaa\AsyncDnsServer\Logger\Logger;
 use PeeHaa\AsyncDnsServer\Resolver\Cache;
 use PeeHaa\AsyncDnsServer\Resolver\External;
+use PeeHaa\AsyncDnsServer\Resolver\Recursive;
 use PeeHaa\AsyncDnsServer\Resolver\Resolver;
 use PeeHaa\AsyncDnsServer\Resolver\Stack;
 use function Amp\call;
@@ -99,6 +100,11 @@ final class Configuration
     {
         if (preg_match('~^External/(?P<ipAddress>[^:]+):(?P<port>\d+)$~', $resolver, $matches)) {
             return new External($logger, $encoder, $decoder, $matches['ipAddress'], (int) $matches['port']);
+        }
+
+        switch ($resolver) {
+            case 'Recursive':
+                return new Recursive($logger, $encoder, $decoder);
         }
     }
 
