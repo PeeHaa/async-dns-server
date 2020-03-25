@@ -24,9 +24,9 @@ final class Recursive implements Resolver
 
     public function __construct(Logger $logger, Encoder $encoder, Decoder $decoder)
     {
-        $this->logger    = $logger;
-        $this->encoder   = $encoder;
-        $this->decoder   = $decoder;
+        $this->logger  = $logger;
+        $this->encoder = $encoder;
+        $this->decoder = $decoder;
     }
 
     /**
